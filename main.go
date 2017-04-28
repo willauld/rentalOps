@@ -52,11 +52,12 @@ type renterRecord struct {
 	WaterOwed     float32
 	Deposit       float32
 
-	FirstPayment    time.Time
+	FirstPayment    time.Time //Obsolete
 	NextPaymentDue  time.Time
-	PaidThrough     time.Time
-	LastLateThrough time.Time
-	StartMonth      time.Month
+	PaidThrough     time.Time  //Obsolete
+	LastLateThrough time.Time  //used for determining late fee, can this be replace?
+	StartMonth      time.Month //Obsolete
+	RentChargedThru time.Time
 	ReminderSent    bool
 }
 type jawaInfo struct {
@@ -416,6 +417,10 @@ func printTenant(t renterRecord, rent float32, dueday int) {
 	// TODO this func is a dup!! remove one
 }
 */
+func getUniqueDateKey(date time.Time) string {
+	nano := time.Now().Nanosecond()
+	return fmt.Sprintf("%s_%d_%d", date.Month().String(), date.Year(), nano)
+}
 func getUniqueKey(tr map[string]payment, date time.Time) string {
 	i := 1
 	for {
@@ -425,7 +430,6 @@ func getUniqueKey(tr map[string]payment, date time.Time) string {
 			return key
 		}
 		i++
-
 	}
 }
 
@@ -653,7 +657,34 @@ func displayStatus(i *jawaInfo) {
 
 }
 
+func updateRentsOwed(dataPtr *string, ji *jawaInfo) error {
+
+	for _, v := range ji.Rental {
+		ten := ji.Tenant[v.TenantKey]
+		if time.Now().After(ten.RentChargedThru) {
+			if len(ten.Rent) > 0 {
+				ten.RentOwed += v.Rent *
+					float32(time.Now().Month()-ten.RentChargedThru.Month())
+			}
+			ten.RentChargedThru = now.EndOfMonth()
+		}
+	}
+	err := Save(*dataPtr, ji)
+	return err
+}
+
+/*
+func hardExit() {
+	fmt.Printf("hardExit() called\n\n\n")
+	fmt.Printf("hardExit() called\n\n\n")
+	os.Exit(2) // this is to force all code to stop. mostly for net/http package where I don't have access to the server
+}
+*/
+
+var dataTarget string
+
 func main() {
+	//defer hardExit() // to kill gui server after everything else
 	dataPtr := pflag.String("dataloc", "", "Location for the appartment data file")
 	versionPtr := pflag.Bool("version", false, "program version")
 	editPtr := pflag.Bool("edit", false, "Edit Rental Information")
@@ -661,6 +692,7 @@ func main() {
 	initPayPtr := pflag.Bool("initPayment", false, "Record the initial payment for a Tenant")
 	remindPtr := pflag.Bool("remind", false, "Create Reminder Letters")
 	statusPtr := pflag.Bool("status", false, "Display the current status")
+	WebGUIPtr := pflag.Bool("gui", false, "Use the Web Interface")
 	pflag.Parse()
 
 	if *versionPtr == true {
@@ -685,6 +717,9 @@ func main() {
 	//check(err)
 	fmt.Printf("Load err: %v\n", err)
 	defer Save(*dataPtr, ji)
+	if err == nil {
+		updateRentsOwed(dataPtr, ji)
+	}
 	if *editPtr == true {
 		editInfo(ji)
 		return
@@ -696,6 +731,10 @@ func main() {
 	if *statusPtr {
 		displayStatus(ji)
 		return
+	}
+	if *WebGUIPtr {
+		dataTarget = *dataPtr
+		establishWindow(ji)
 	}
 	pflag.Usage()
 }
