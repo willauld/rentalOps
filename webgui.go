@@ -8,10 +8,22 @@ import (
 	//"github.com/willauld/gowut/gwu"
 )
 
+var nl gwu.Label
+
+func Notify(n string, e gwu.Event) {
+	nl.SetText(n)
+	if e != nil {
+		e.MarkDirty(nl)
+	}
+}
+
 func buildTabPanel(j *jawaInfo) gwu.Comp {
 
 	t := gwu.NewTabPanel()
-	t.Style().SetSizePx(800, 400) // was 500 x 300
+	t.Style().SetSizePx(800, 400)
+	t.AddEHandlerFunc(func(e gwu.Event) {
+		Notify(fmt.Sprintf("Clicked on tab: %d", t.Selected()), e)
+	}, gwu.ETypeStateChange)
 
 	t.SetTabBarPlacement(gwu.TbPlacementLeft)
 	t.TabBarFmt().SetHAlign(gwu.HALeft)
@@ -29,6 +41,7 @@ func buildTabPanel(j *jawaInfo) gwu.Comp {
 	// &&& TODO end panal
 	t.AddString("Edit Rentals", buildEditRentals(j))
 	// &&& TODO end panal
+	t.AddString("Edit Tenants", buildEditTenants(j))
 	c = gwu.NewPanel()
 	tb := gwu.NewTextBox("Click to edit this comment.")
 	tb.SetRows(10)
@@ -81,6 +94,15 @@ func establishWindow(j *jawaInfo) {
 	}, gwu.ETypeClick)
 	hp.Add(fb)
 	p.Add(hp)
+
+	np := gwu.NewHorizontalPanel() //notification pannel
+	np.Style().SetFullWidth()
+	np.SetHAlign(gwu.HACenter)
+	nl = gwu.NewLabel("")
+	np.Add(nl)
+
+	p.Add(np)
+
 	p.AddVSpace(15)
 
 	t := buildTabPanel(j)

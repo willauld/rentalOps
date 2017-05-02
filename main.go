@@ -16,7 +16,7 @@ import (
 var version = struct {
 	major int
 	minor int
-}{0, 1}
+}{0, 2}
 
 type commonInfo struct {
 	LateFee     float32
@@ -29,6 +29,7 @@ type rentalRecord struct {
 	Tenant    string
 	TenantKey string
 	Rent      float32
+	Deposit   float32
 	DueDay    int
 	Street    string
 	City      string
@@ -36,29 +37,26 @@ type rentalRecord struct {
 	Zip       string
 }
 type payment struct {
-	Amount float32
-	Date   time.Time
+	Amount  float32
+	Rent    float32
+	Late    float32
+	Bounce  float32
+	Water   float32
+	Deposit float32
+	Date    time.Time
 }
 type renterRecord struct {
-	Apartment     string
-	Name          string
-	Rent          map[string]payment
-	BouncePenalty map[string]payment
-	LatePenalty   map[string]payment
-	Water         map[string]payment
-	RentOwed      float32
-	BounceOwed    float32
-	LatePOwed     float32
-	WaterOwed     float32
-	Deposit       float32
+	Apartment   string
+	Name        string
+	Payment     map[string]payment
+	RentOwed    float32
+	BounceOwed  float32
+	LatePOwed   float32
+	WaterOwed   float32
+	DepositOwed float32
 
-	FirstPayment    time.Time //Obsolete
 	NextPaymentDue  time.Time
-	PaidThrough     time.Time  //Obsolete
-	LastLateThrough time.Time  //used for determining late fee, can this be replace?
-	StartMonth      time.Month //Obsolete
 	RentChargedThru time.Time
-	ReminderSent    bool
 }
 type jawaInfo struct {
 	CI     commonInfo
@@ -121,9 +119,7 @@ func editRental(i *jawaInfo, apt string) {
 			fmt.Printf("Tenant appears to be NEW\n")
 			tr = renterRecord{}
 		}
-		tr.StartMonth = time.Now().Month()
-		tr.FirstPayment = time.Now()
-		tr.NextPaymentDue = now.New(time.Now().AddDate(0, 1, 0)).BeginningOfMonth()
+		tr.NextPaymentDue = now.New(timeNowRental().AddDate(0, 1, 0)).BeginningOfMonth()
 		rr.TenantKey = tenantKey
 		tr.Apartment = apt
 		tr.Name = nameStr
@@ -295,34 +291,11 @@ func displayTenant(tr renterRecord, withHistory bool) {
 	fmt.Printf("Late fee owed:    %-6.2f\n", tr.LatePOwed)
 	fmt.Printf("Bounce fee owed:  %-6.2f\n", tr.BounceOwed)
 	fmt.Printf("Water owed:       %-6.2f\n", tr.WaterOwed)
-	fmt.Printf("Deposit paid:     %-6.2f\n", tr.Deposit)
+	fmt.Printf("DepositOwed paid: %-6.2f\n", tr.DepositOwed)
 	fmt.Printf("Next Payment due: %v\n", tr.NextPaymentDue)
-	fmt.Printf("Paid through:     %v\n", tr.PaidThrough)
-	fmt.Printf("Last Late paid through:  %v\n", tr.LastLateThrough)
-	//fmt.Printf("StartMonth(obsolete):        %v\n", tr.StartMonth)
-	//fmt.Printf("First payment(obsolete):    %v\n", tr.FirstPayment)
-	//fmt.Printf("Reminder sent(obsolete):    %v\n", tr.ReminderSent)
 	if withHistory {
-		fmt.Printf("\t%d Rent Payments\n", len(tr.Rent))
-		for k, v := range tr.Rent {
-			fmt.Printf("\t\tPayment for %v:\n", k)
-			fmt.Printf("\t\t\tAmount:  %-6.2f\n", v.Amount)
-			fmt.Printf("\t\t\tPaid on: %v\n", v.Date)
-		}
-		fmt.Printf("\t%d Late Fee Payments\n", len(tr.LatePenalty))
-		for k, v := range tr.LatePenalty {
-			fmt.Printf("\t\tPayment for %v:\n", k)
-			fmt.Printf("\t\t\tAmount:  %-6.2f\n", v.Amount)
-			fmt.Printf("\t\t\tPaid on: %v\n", v.Date)
-		}
-		fmt.Printf("\t%d Bounce Fee Payments\n", len(tr.BouncePenalty))
-		for k, v := range tr.BouncePenalty {
-			fmt.Printf("\t\tPayment for %v:\n", k)
-			fmt.Printf("\t\t\tAmount:  %-6.2f\n", v.Amount)
-			fmt.Printf("\t\t\tPaid on: %v\n", v.Date)
-		}
-		fmt.Printf("\t%d Water Payments\n", len(tr.Water))
-		for k, v := range tr.Water {
+		fmt.Printf("\t%d Rent Payments\n", len(tr.Payment))
+		for k, v := range tr.Payment {
 			fmt.Printf("\t\tPayment for %v:\n", k)
 			fmt.Printf("\t\t\tAmount:  %-6.2f\n", v.Amount)
 			fmt.Printf("\t\t\tPaid on: %v\n", v.Date)
@@ -376,7 +349,7 @@ func createLetter(r rentalRecord, ji *jawaInfo) {
 	tr := ji.Tenant[r.TenantKey]
 	rm := tr.NextPaymentDue.Month()
 	sum := r.Rent + tr.RentOwed + tr.LatePOwed + tr.BounceOwed + tr.WaterOwed
-	t := time.Now()
+	t := timeNowRental()
 	fmt.Printf("\n")
 	fmt.Printf("%s %d, %d\n", t.Month(), t.Day(), t.Year())
 	fmt.Printf("\n")
@@ -400,67 +373,47 @@ func createLetter(r rentalRecord, ji *jawaInfo) {
 	fmt.Printf("\n")
 }
 
-/*
-func printTenant(t renterRecord, rent float32, dueday int) {
-	fmt.Printf("Apartment: %s\n", t.Apartment)
-	fmt.Printf("Rent Owed:       %-6.2f\n", t.RentOwed)
-	fmt.Printf("Late Fee Owed:   %-6.2f\n", t.LatePOwed)
-	fmt.Printf("Bounce Fee Owed: %-6.2f\n", t.BounceOwed)
-	fmt.Printf("Water Owed:      %-6.2f\n", t.WaterOwed)
-	fmt.Printf("\n")
-	fmt.Printf("Start Month:     %v\n", t.StartMonth)
-	fmt.Printf("Reminder Sent:   %v\n", t.ReminderSent)
-	fmt.Printf("\n")
-	fmt.Printf("Rent current:    %-6.2f\n", rent)
-	fmt.Printf("due day:         %d\n", dueday)
-	// TODO may want to print the maps as well
-	// TODO this func is a dup!! remove one
-}
-*/
 func getUniqueDateKey(date time.Time) string {
-	nano := time.Now().Nanosecond()
+	nano := timeNowRental().Nanosecond()
 	return fmt.Sprintf("%s_%d_%d", date.Month().String(), date.Year(), nano)
 }
-func getUniqueKey(tr map[string]payment, date time.Time) string {
+func getUniqueKey(tr map[string]payment, date time.Time) (string, error) {
+	if tr == nil {
+		return "", fmt.Errorf("tenant.Payment map is nil")
+	}
 	i := 1
 	for {
 		key := fmt.Sprintf("%s_%d_%d", date.Month().String(), date.Year(), i)
 		_, ok := tr[key]
 		if !ok {
-			return key
+			return key, nil
 		}
 		i++
 	}
 }
 
 func recordPayments(r rentalRecord, ji *jawaInfo, initialPayment bool) {
-	//fmt.Printf("Current Month: %s\n", time.Now().Month())
+	//fmt.Printf("Current Month: %s\n", timeNowRental().Month())
 	tr := ji.Tenant[r.TenantKey]
-	rr := ji.Rental[tr.Apartment]
-	if tr.Rent == nil || initialPayment {
-		tr.Rent = map[string]payment{}
-	}
-	if tr.Water == nil || initialPayment {
-		tr.Water = map[string]payment{}
-	}
-	if tr.LatePenalty == nil || initialPayment {
-		tr.LatePenalty = map[string]payment{}
-	}
-	if tr.BouncePenalty == nil || initialPayment {
-		tr.BouncePenalty = map[string]payment{}
-	}
-	if initialPayment {
+	rr := ji.Rental[tr.Apartment] // Why am i not just using "r"
+	if tr.Payment == nil || initialPayment {
+		tr.Payment = map[string]payment{}
+		/*
+			}
+			if initialPayment {
+		*/
 		tr.RentOwed = 0
 		tr.LatePOwed = 0
 		tr.BounceOwed = 0
 		tr.WaterOwed = 0
+		tr.DepositOwed = 0
 	}
 
 	date := getInputDate()
 	nextDue := tr.NextPaymentDue
 	passedDue := nextDue.AddDate(0, 0, ji.CI.IncurrAfter)
-	if len(tr.Rent) > 0 { // This is the initial payment
-		if date.After(passedDue) && date.After(tr.LastLateThrough) {
+	if len(tr.Payment) > 0 { // This is not the initial payment
+		if date.After(passedDue) {
 			tr.LatePOwed = tr.LatePOwed + ji.CI.LateFee
 		}
 	}
@@ -481,35 +434,45 @@ around:
 			return
 		case 1:
 			pr.Amount = getInputFloat("Enter Rent Payed: ")
-			if len(tr.Rent) > 0 {
+			if len(tr.Payment) > 0 {
 				tr.RentOwed = tr.RentOwed + rr.Rent - pr.Amount
 			}
 			pt := getInputPaidThrough(date)
-			tr.PaidThrough = pt
-			tr.LastLateThrough = pt
 			tr.NextPaymentDue = pt.AddDate(0, 0, 1)
-			key := getUniqueKey(tr.Rent, date)
+			key, err := getUniqueKey(tr.Payment, date)
+			if err != nil {
+				fmt.Printf("getUniqueKey() failed: %s", err)
+			}
 			fmt.Printf("payment KEY is: %s\n", key)
-			tr.Rent[key] = pr
-			fmt.Printf("Rent[] has %d elements now\n", len(tr.Rent))
+			tr.Payment[key] = pr
+			fmt.Printf("Rent[] has %d elements now\n", len(tr.Payment))
 		case 2:
 			pr.Amount = getInputFloat("Enter Water Payed: ")
 			// TODO, adjust the WaterOwed???
 			// TODO, All things water will wait for later
-			key := getUniqueKey(tr.Water, date)
-			tr.Water[key] = pr
+			key, err := getUniqueKey(tr.Payment, date)
+			if err != nil {
+				fmt.Printf("getUniqueKey() failed: %s", err)
+			}
+			tr.Payment[key] = pr
 		case 3:
 			pr.Amount = getInputFloat("Enter Late Fee Payed: ")
 			tr.LatePOwed = tr.LatePOwed - pr.Amount
-			key := getUniqueKey(tr.LatePenalty, date)
-			tr.LatePenalty[key] = pr
+			key, err := getUniqueKey(tr.Payment, date)
+			if err != nil {
+				fmt.Printf("getUniqueKey() failed: %s", err)
+			}
+			tr.Payment[key] = pr
 		case 4:
 			pr.Amount = getInputFloat("Enter Bounce fee Payed: ")
 			tr.BounceOwed = tr.BounceOwed - pr.Amount
-			key := getUniqueKey(tr.BouncePenalty, date)
-			tr.BouncePenalty[key] = pr
+			key, err := getUniqueKey(tr.Payment, date)
+			if err != nil {
+				fmt.Printf("getUniqueKey() failed: %s", err)
+			}
+			tr.Payment[key] = pr
 		case 5:
-			tr.Deposit = getInputFloat("Enter Deposit Payed: ")
+			tr.DepositOwed = getInputFloat("Enter Deposit Payed: ")
 		default:
 			fmt.Printf("Incorrect entry, please try again\n")
 			continue around
@@ -661,10 +624,10 @@ func updateRentsOwed(dataPtr *string, ji *jawaInfo) error {
 
 	for _, v := range ji.Rental {
 		ten := ji.Tenant[v.TenantKey]
-		if time.Now().After(ten.RentChargedThru) {
-			if len(ten.Rent) > 0 {
+		if timeNowRental().After(ten.RentChargedThru) {
+			if len(ten.Payment) > 0 {
 				ten.RentOwed += v.Rent *
-					float32(time.Now().Month()-ten.RentChargedThru.Month())
+					float32(timeNowRental().Month()-ten.RentChargedThru.Month())
 			}
 			ten.RentChargedThru = now.EndOfMonth()
 		}
