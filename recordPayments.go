@@ -57,6 +57,9 @@ func getDayOfMonthDue(j *jawaInfo, apt string) string {
 func getRentalDeposit(j *jawaInfo, apt string) string {
 	return fmt.Sprintf("%-6.2f", j.Rental[apt].Deposit)
 }
+func getTenantKey(j *jawaInfo, apt string) string {
+	return j.Rental[apt].TenantKey
+}
 func getTenantRentOwed(j *jawaInfo, tenkey string) (string, bool) {
 	val := j.Tenant[tenkey].RentOwed
 	return fmt.Sprintf("%-6.2f", val), !(val < 0)
@@ -174,54 +177,61 @@ func updateRecordPaymentPage(ji *jawaInfo, apt string, e gwu.Event,
 	cb, ays gwu.CheckBox, cbTable gwu.Table,
 	payDate, payRent, payLate, payBoun, payDepo, totalSub gwu.TextBox) {
 
-	payDate.SetText("mm-dd-yyyy")
-	payRent.SetText("0.00")
-	payLate.SetText("0.00")
-	payBoun.SetText("0.00")
-	payDepo.SetText("0.00")
-	totalSub.SetText("")
+	/*
+		payDate.SetText("mm-dd-yyyy")
+			payRent.SetText("0.00")
+			payLate.SetText("0.00")
+			payBoun.SetText("0.00")
+			payDepo.SetText("0.00")
+			totalSub.SetText("")
+		payDue.SetText(getTenantRentDueDate(ji, apt))
+		nextDueDate.SetText(getTenantRentDueDate(ji, apt))
+	*/
 
-	val, pos := getTenantRentOwed(ji, apt)
+	val, pos := getTenantRentOwed(ji, getTenantKey(ji, apt))
 	cur1.SetText(val)
 	setTextFontIfPos(cur1, gwu.ClrRed, pos)
-	val, pos = getTenantLateOwed(ji, apt)
+	val, pos = getTenantLateOwed(ji, getTenantKey(ji, apt))
 	cur2.SetText(val)
 	setTextFontIfPos(cur2, gwu.ClrRed, pos)
-	val, pos = getTenantBounceOwed(ji, apt)
+	val, pos = getTenantBounceOwed(ji, getTenantKey(ji, apt))
 	cur3.SetText(val)
 	setTextFontIfPos(cur3, gwu.ClrRed, pos)
-	val, pos = getTenantDepositOwed(ji, apt)
+	val, pos = getTenantDepositOwed(ji, getTenantKey(ji, apt))
 	cur4.SetText(val)
 	setTextFontIfPos(cur4, gwu.ClrRed, pos)
 	monthly.SetText(getRentalRent(ji, apt))
 	rentalDeposit.SetText(getRentalDeposit(ji, apt))
-	payDue.SetText(getTenantRentDueDate(ji, apt))
-	nextDueDate.SetText(getTenantRentDueDate(ji, apt))
+	/*
+		payDue.SetText(getTenantRentDueDate(ji, apt))
+		nextDueDate.SetText(getTenantRentDueDate(ji, apt))
+	*/
 	cb.Style().SetBackground("")
 	cb.SetState(false)
 	ays.SetState(false)
 	cbTable.Remove(ays)
 
-	e.MarkDirty(cur1)
-	e.MarkDirty(cur2)
-	e.MarkDirty(cur3)
-	e.MarkDirty(cur4)
-	e.MarkDirty(monthly)
-	e.MarkDirty(rentalDeposit)
-	e.MarkDirty(payDue)
-	e.MarkDirty(payDate)
-	e.MarkDirty(nextDueDate)
-	e.MarkDirty(cb)
-	e.MarkDirty(ays)
-	e.MarkDirty(cbTable)
-	e.MarkDirty(payRent)
-	e.MarkDirty(payLate)
-	e.MarkDirty(payBoun)
-	e.MarkDirty(payDepo)
-	e.MarkDirty(totalSub)
-
+	if e != nil {
+		e.MarkDirty(cur1)
+		e.MarkDirty(cur2)
+		e.MarkDirty(cur3)
+		e.MarkDirty(cur4)
+		e.MarkDirty(monthly)
+		e.MarkDirty(rentalDeposit)
+		e.MarkDirty(payDue)
+		e.MarkDirty(payDate)
+		e.MarkDirty(nextDueDate)
+		e.MarkDirty(cb)
+		e.MarkDirty(ays)
+		e.MarkDirty(cbTable)
+		e.MarkDirty(payRent)
+		e.MarkDirty(payLate)
+		e.MarkDirty(payBoun)
+		e.MarkDirty(payDepo)
+		e.MarkDirty(totalSub)
+	}
 }
-func buildRecordPayments( /*t gwu.TabPanel,*/ ji *jawaInfo) gwu.Panel {
+func buildRecordPayments(ji *jawaInfo) gwu.Panel {
 	var apt string
 	var table, tableb, cbTable gwu.Table
 	var cb, ays gwu.CheckBox
@@ -276,7 +286,7 @@ func buildRecordPayments( /*t gwu.TabPanel,*/ ji *jawaInfo) gwu.Panel {
 	payLate = gwu.NewTextBox("0.00")
 	payBoun = gwu.NewTextBox("0.00")
 	payDepo = gwu.NewTextBox("0.00")
-	totalSub = gwu.NewTextBox("")
+	totalSub = gwu.NewTextBox("0.00")
 
 	table.Add(payDate, 0, 1)
 	table.Add(nextDueDate, 1, 1)
@@ -393,10 +403,22 @@ func buildRecordPayments( /*t gwu.TabPanel,*/ ji *jawaInfo) gwu.Panel {
 			newDueDate := time.Date(yearN, time.Month(monthN), dayN, 0, 0, 0, 0, time.Local)
 			submitPayment(ji, apt, date, newDueDate, rent, late, bounce, deposit, ays.State())
 
+			payDate.SetText("mm-dd-yyyy")
+			payRent.SetText("0.00")
+			payLate.SetText("0.00")
+			payBoun.SetText("0.00")
+			payDepo.SetText("0.00")
+			totalSub.SetText("0.00")
+			payDue.SetText(getTenantRentDueDate(ji, apt))
+			nextDueDate.SetText(getTenantRentDueDate(ji, apt))
+
 			updateRecordPaymentPage(ji, apt, e, cur1, cur2, cur3, cur4,
 				monthly, rentalDeposit, payDue, nextDueDate, cb, ays, cbTable,
 				payDate, payRent, payLate, payBoun, payDepo, totalSub)
 		}
+
+		e.MarkDirty(payDate, payRent, payLate, payBoun, payDepo)
+		e.MarkDirty(totalSub, payDue, nextDueDate)
 	}, gwu.ETypeClick)
 	hp.Add(b)
 
@@ -406,11 +428,15 @@ func buildRecordPayments( /*t gwu.TabPanel,*/ ji *jawaInfo) gwu.Panel {
 	bt.AddEHandlerFunc(func(e gwu.Event) {
 		rent, late, boun, depo, tryAgain :=
 			getPaymentAllocation(payRent, payLate, payBoun, payDepo)
+		fmt.Printf("recieved a try again signal? %v\n", tryAgain)
 		if !tryAgain {
 			total := rent + late + boun + depo
 			totalSub.SetText(fmt.Sprintf("%-6.2f", total))
 			e.MarkDirty(totalSub)
 		}
+		updateRecordPaymentPage(ji, apt, e, cur1, cur2, cur3, cur4,
+			monthly, rentalDeposit, payDue, nextDueDate, cb, ays, cbTable,
+			payDate, payRent, payLate, payBoun, payDepo, totalSub)
 	}, gwu.ETypeClick)
 	hp.Add(bt)
 	c.Add(hp)
@@ -430,5 +456,8 @@ func buildRecordPayments( /*t gwu.TabPanel,*/ ji *jawaInfo) gwu.Panel {
 	tableb.Add(payDue, 2, 1)
 
 	c.Add(tableb)
+	updateRecordPaymentPage(ji, apt, nil, cur1, cur2, cur3, cur4,
+		monthly, rentalDeposit, payDue, nextDueDate, cb, ays, cbTable,
+		payDate, payRent, payLate, payBoun, payDepo, totalSub)
 	return c
 }

@@ -131,15 +131,29 @@ func buildEditRentals(j *jawaInfo) gwu.Panel {
 	var NewName gwu.TextBox
 	var bN gwu.Button
 	var aptlb gwu.ListBox
+	var apt string
 
 	c := gwu.NewPanel()
+	c.AddEHandlerFunc(func(e gwu.Event) {
+		list := getAptList(j)
+		apt = list[aptlb.SelectedIdx()]
+
+		updateRentalPage(j, apt, e,
+			AptName, TenName, TenKey, MRent, Deposit, DueDay,
+			Street, City, State, Zip, RentOwed, BounceOwed, LateOwed,
+			WaterOwed, DepositOwed, NextDueDate, RentChargedThrou)
+
+		e.MarkDirty(aptlb)
+		Notify("EditRentals Focus Event happened", e)
+		fmt.Printf("inside the editRentals state change handler\n")
+	}, gwu.ETypeStateChange /*gwu.ETypeFocus*/ /*gwu.ETypeClick*/)
 
 	tableA := gwu.NewTable()
 	tableA.SetCellPadding(2)
 	tableA.EnsureSize(2, 5)
 	tableA.Add(gwu.NewLabel("Edit Rental:"), 0, 0)
 	list := getAptList(j)
-	apt := list[0]
+	apt = list[0]
 	aptlb = gwu.NewListBox(list)
 	aptlb.Style().SetFullWidth()
 	aptlbHandler := func(e gwu.Event) {
@@ -346,6 +360,22 @@ func buildEditRentals(j *jawaInfo) gwu.Panel {
 
 	tableA.Add(b, 0, 2)
 	//table.Add(b, 0, 2)
+	u := gwu.NewButton("Update Page")
+	u.AddEHandlerFunc(func(e gwu.Event) {
+
+		updateRentalPage(j, apt, e,
+			AptName, TenName, TenKey, MRent, Deposit, DueDay,
+			Street, City, State, Zip, RentOwed, BounceOwed, LateOwed,
+			WaterOwed, DepositOwed, NextDueDate, RentChargedThrou)
+
+		list := getAptList(j)
+		aptlb := gwu.NewListBox(list)
+
+		e.MarkDirty(aptlb)
+
+	}, gwu.ETypeClick)
+
+	tableA.Add(u, 1, 5)
 
 	cbdTable := gwu.NewTable()
 	cbdTable.SetCellPadding(2)

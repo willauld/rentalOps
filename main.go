@@ -19,10 +19,16 @@ var version = struct {
 }{0, 2}
 
 type commonInfo struct {
-	LateFee     float32
-	IncurrAfter int
-	BounceFee   float32
-	Apartments  *[]string
+	OfficeManager       string
+	OfficeStreet        string
+	OfficeCity          string
+	OfficeState         string
+	OfficeZip           string
+	CorrespondenceTitle string
+	LateFee             float32
+	IncurrAfter         int
+	BounceFee           float32
+	Apartments          *[]string
 }
 type rentalRecord struct {
 	Apartment string

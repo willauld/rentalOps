@@ -187,6 +187,20 @@ func buildEditTenants(j *jawaInfo) gwu.Panel {
 
 	tablea.Add(b, 0, 2)
 	//table.Add(b, 0, 2)
+	u := gwu.NewButton("Update Page")
+	u.AddEHandlerFunc(func(e gwu.Event) {
+
+		updateTenantPage(j, ten, e,
+			aptname, tenname, rentowed, bounceowed, lateowed,
+			waterowed, depositowed, nextduedate, rentchargedthrou, paymentRecords)
+
+		list := getTenantList(j)
+		tenlb := gwu.NewListBox(list)
+
+		e.MarkDirty(tenlb)
+
+	}, gwu.ETypeClick)
+	tablea.Add(u, 0, 4)
 
 	cbdtable := gwu.NewTable()
 	cbdtable.SetCellPadding(2)

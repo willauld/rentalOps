@@ -10,10 +10,26 @@ import (
 
 var nl gwu.Label
 
+// Notify posts a notification above Rental Ops Table
 func Notify(n string, e gwu.Event) {
 	nl.SetText(n)
 	if e != nil {
 		e.MarkDirty(nl)
+	}
+}
+
+var tabUpdateFuncs [20]func()
+
+func registerTabUpdateFunc(idx int, f func()) {
+	if idx < 0 || idx >= 20 {
+		return
+	}
+	tabUpdateFuncs[idx] = f
+}
+
+func updateTab(idx int) {
+	if tabUpdateFuncs[idx] != nil {
+		tabUpdateFuncs[idx]()
 	}
 }
 
@@ -22,32 +38,59 @@ func buildTabPanel(j *jawaInfo) gwu.Comp {
 	t := gwu.NewTabPanel()
 	t.Style().SetSizePx(800, 400)
 	t.AddEHandlerFunc(func(e gwu.Event) {
+		// how to go from t.Selected() to something I can put
+		// in
 		Notify(fmt.Sprintf("Clicked on tab: %d", t.Selected()), e)
+		fmt.Printf("In tabPanel state change handler\n")
+		/*
+			component = t.CompAt(t.Selected())
+			if component.handlers[ETypeStateChange] != nil {
+				component.dispatchEvent(e.forkEvent(ETypeStateChange, c))
+			}
+		*/
+		t.CompAt(t.Selected())
 	}, gwu.ETypeStateChange)
 
 	t.SetTabBarPlacement(gwu.TbPlacementLeft)
 	t.TabBarFmt().SetHAlign(gwu.HALeft)
 	t.TabBarFmt().SetVAlign(gwu.VATop)
 
-	t.AddString("Record Payments", buildRecordPayments( /*t,*/ j))
+	t.AddString("Record Payments", buildRecordPayments(j))
 	// &&&& TODO end first panal
-	c := gwu.NewPanel()
-	c.Add(gwu.NewLabel("You have no new messages."))
+	c := buildRemindPage(j)
 	t.AddString("Reminders", c)
 	// &&& TODO end second panal
 	c = gwu.NewPanel()
 	c.Add(gwu.NewLabel("You have no sent messages."))
 	t.AddString("Status", c)
 	// &&& TODO end panal
-	t.AddString("Edit Rentals", buildEditRentals(j))
+	erl := gwu.NewLabel("Edit Rentals")
+	tabc := buildEditRentals(j)
+	erl.AddEHandlerFunc(func(e gwu.Event) {
+		e.SetFocusedComp(tabc)
+		/*
+			if tabc.handlers[ETypeStateChange] != nil {
+				t.dispatchEvent(e.forkEvent(ETypeStateChange, tabc))
+			}
+		*/
+		fmt.Printf("in tabc lable click handler lunch point\n")
+		Notify("Executing tabc handler", e)
+	}, gwu.ETypeClick)
+	//t.AddString("Edit Rentals", buildEditRentals(j))
+	t.Add(erl, tabc)
 	// &&& TODO end panal
 	t.AddString("Edit Tenants", buildEditTenants(j))
+	// &&& TODO end panal
+	t.AddString("Edit Common", buildEditCommon(j))
+	// &&& TODO end panal
 	c = gwu.NewPanel()
 	tb := gwu.NewTextBox("Click to edit this comment.")
 	tb.SetRows(10)
 	tb.SetCols(40)
+	tb.SetText("I want to see if I can have \n multiple lines \n of text")
 	c.Add(tb)
 	t.AddString("Comment", c)
+	// &&& TODO end panal
 
 	return t
 }
