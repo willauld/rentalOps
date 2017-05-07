@@ -83,13 +83,7 @@ func buildTabPanel(j *jawaInfo) gwu.Comp {
 	// &&& TODO end panal
 	t.AddString("Edit Common", buildEditCommon(j))
 	// &&& TODO end panal
-	c = gwu.NewPanel()
-	tb := gwu.NewTextBox("Click to edit this comment.")
-	tb.SetRows(10)
-	tb.SetCols(40)
-	tb.SetText("I want to see if I can have \n multiple lines \n of text")
-	c.Add(tb)
-	t.AddString("Comment", c)
+	t.AddString("Display DB", buildDisplayDB(j))
 	// &&& TODO end panal
 
 	return t

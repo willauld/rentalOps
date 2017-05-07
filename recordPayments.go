@@ -409,8 +409,8 @@ func buildRecordPayments(ji *jawaInfo) gwu.Panel {
 			payBoun.SetText("0.00")
 			payDepo.SetText("0.00")
 			totalSub.SetText("0.00")
-			payDue.SetText(getTenantRentDueDate(ji, apt))
-			nextDueDate.SetText(getTenantRentDueDate(ji, apt))
+			nextDueDate.SetText(getTenantRentDueDate(ji, getTenantKey(ji, apt)))
+			payDue.SetText(getTenantRentDueDate(ji, getTenantKey(ji, apt)))
 
 			updateRecordPaymentPage(ji, apt, e, cur1, cur2, cur3, cur4,
 				monthly, rentalDeposit, payDue, nextDueDate, cb, ays, cbTable,

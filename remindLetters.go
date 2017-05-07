@@ -26,7 +26,7 @@ func getAmountDetails(j *jawaInfo, apt string) (rows, cols int, str string) {
 		owed float32
 		s    string
 	}{
-		{r.Rent, "Next Rent"},
+		//{r.Rent, "Next Rent"},
 		{tr.RentOwed, "Rent"},
 		{tr.LatePOwed, "Late Fee"},
 		{tr.BounceOwed, "Bounce Fee"},

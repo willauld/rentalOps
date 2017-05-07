@@ -631,11 +631,14 @@ func updateRentsOwed(dataPtr *string, ji *jawaInfo) error {
 	for _, v := range ji.Rental {
 		ten := ji.Tenant[v.TenantKey]
 		if timeNowRental().After(ten.RentChargedThru) {
+			fmt.Printf("Updating %s RentChargedThru\n", v.TenantKey)
 			if len(ten.Payment) > 0 {
 				ten.RentOwed += v.Rent *
 					float32(timeNowRental().Month()-ten.RentChargedThru.Month())
+				fmt.Printf("Rent Owed is now %-6.2f\n", ten.RentOwed)
 			}
 			ten.RentChargedThru = now.EndOfMonth()
+			ji.Tenant[v.TenantKey] = ten
 		}
 	}
 	err := Save(*dataPtr, ji)
@@ -655,6 +658,7 @@ var dataTarget string
 func main() {
 	//defer hardExit() // to kill gui server after everything else
 	dataPtr := pflag.String("dataloc", "", "Location for the appartment data file")
+	timeNowPtr := pflag.String("timenow", "", "Set the current Now date as mm-dd-yyyy")
 	versionPtr := pflag.Bool("version", false, "program version")
 	editPtr := pflag.Bool("edit", false, "Edit Rental Information")
 	recordPtr := pflag.Bool("record", false, "Record payment Information")
@@ -679,6 +683,12 @@ func main() {
 			fmt.Printf("MkdirAll(): %v\n", err)
 		}
 		*dataPtr = filepath.Join(dataDir, "Apartment.dat")
+	}
+	if *timeNowPtr != "" {
+		var month, day, year int
+		fmt.Sscanf(*timeNowPtr, "%d-%d-%d", &month, &day, &year)
+		toDate := time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
+		initTimeRental(toDate)
 	}
 
 	ji := &jawaInfo{}
