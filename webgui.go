@@ -65,9 +65,10 @@ func buildTabPanel(j *jawaInfo) gwu.Comp {
 	t.AddString("Status", c)
 	// &&& TODO end panal
 	erl := gwu.NewLabel("Edit Rentals")
-	tabc := buildEditRentals(j)
+	erl.Style().SetDisplay(gwu.DisplayBlock) // Display: block - so the whole cell of the tab is clickable
+	tabc, objToFocus := buildEditRentals(j)
 	erl.AddEHandlerFunc(func(e gwu.Event) {
-		e.SetFocusedComp(tabc)
+		e.SetFocusedComp(objToFocus)
 		/*
 			if tabc.handlers[ETypeStateChange] != nil {
 				t.dispatchEvent(e.forkEvent(ETypeStateChange, tabc))

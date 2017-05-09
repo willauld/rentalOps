@@ -638,6 +638,9 @@ func updateRentsOwed(dataPtr *string, ji *jawaInfo) error {
 				fmt.Printf("Rent Owed is now %-6.2f\n", ten.RentOwed)
 			}
 			ten.RentChargedThru = now.EndOfMonth()
+			if ji.Tenant == nil {
+				ji.Tenant = map[string]renterRecord{}
+			}
 			ji.Tenant[v.TenantKey] = ten
 		}
 	}

@@ -64,6 +64,11 @@ func updateRemindPage(j *jawaInfo, apt string, e gwu.Event,
 	t := timeNowRental()
 	str = fmt.Sprintf("%s %d, %d", t.Month(), t.Day(), t.Year())
 	LDate.SetText(str)
+	if arec.Tenant == "" {
+		str := fmt.Sprintf("***There is no tenant for apartment [%s]***", apt)
+		FirstP.SetText(str)
+		return
+	}
 	str = fmt.Sprintf("Dear %s,\n", strings.Fields(arec.Tenant)[0])
 	DearT.SetText(str)
 	FirstP.SetText("You currently owe, based on the following details:")

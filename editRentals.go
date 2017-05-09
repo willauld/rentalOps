@@ -63,7 +63,13 @@ func updateRentalRecord(j *jawaInfo, apt string,
 	ten.NextPaymentDue = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
 	ten.RentChargedThru = time.Date(yearN, time.Month(monthN), dayN, 0, 0, 0, 0, time.Local)
 
+	if j.Tenant == nil {
+		j.Tenant = map[string]renterRecord{}
+	}
 	j.Tenant[rec.TenantKey] = ten
+	if j.Rental == nil {
+		j.Rental = map[string]rentalRecord{}
+	}
 	j.Rental[apt] = rec
 }
 
@@ -120,7 +126,7 @@ func updateRentalPage(j *jawaInfo, apt string, e gwu.Event,
 	}
 }
 
-func buildEditRentals(j *jawaInfo) gwu.Panel {
+func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 	var AptName, TenName, TenKey, MRent, Deposit, DueDay gwu.TextBox
 	var Street, City, State, Zip, RentOwed, BounceOwed, LateOwed gwu.TextBox
 	var WaterOwed, DepositOwed gwu.TextBox
@@ -146,7 +152,7 @@ func buildEditRentals(j *jawaInfo) gwu.Panel {
 		e.MarkDirty(aptlb)
 		Notify("EditRentals Focus Event happened", e)
 		fmt.Printf("inside the editRentals state change handler\n")
-	}, gwu.ETypeStateChange /*gwu.ETypeFocus*/ /*gwu.ETypeClick*/)
+	}, /*gwu.ETypeStateChange*/ gwu.ETypeFocus /*gwu.ETypeClick*/)
 
 	tableA := gwu.NewTable()
 	tableA.SetCellPadding(2)
@@ -216,7 +222,10 @@ func buildEditRentals(j *jawaInfo) gwu.Panel {
 			e.MarkDirty(tableA)
 			return
 		}
-		fmt.Printf("name [%s] not in list\n", name)
+		fmt.Printf("name [%s] not in list --Thats a good thing\n", name)
+		if j.Rental == nil {
+			j.Rental = map[string]rentalRecord{}
+		}
 		j.Rental[name] = rentalRecord{Apartment: name}
 
 		tableA.Remove(*labelToRemove)
@@ -446,5 +455,5 @@ func buildEditRentals(j *jawaInfo) gwu.Panel {
 	c.AddVSpace(15)
 	c.Add(cbdTable)
 
-	return c
+	return c, aptlb
 }

@@ -24,6 +24,12 @@ func strIndex(vs []string, t string) int {
 	return -1
 }
 func getAptList(ji *jawaInfo) []string {
+	if len(ji.Rental) < 1 {
+		fmt.Printf("There are no apartments yet defined\n")
+		keys := make([]string, 1)
+		keys[0] = "undefined"
+		return keys
+	}
 	keys := make([]string, len(ji.Rental))
 
 	i := 0
@@ -35,6 +41,12 @@ func getAptList(ji *jawaInfo) []string {
 	return keys
 }
 func getTenantList(ji *jawaInfo) []string {
+	if len(ji.Rental) < 1 {
+		fmt.Printf("There are no tenants yet defined\n")
+		keys := make([]string, 1)
+		keys[0] = "undefined"
+		return keys
+	}
 	keys := make([]string, len(ji.Tenant))
 
 	i := 0
