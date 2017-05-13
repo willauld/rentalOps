@@ -37,20 +37,15 @@ func buildTabPanel(j *jawaInfo) gwu.Comp {
 
 	t := gwu.NewTabPanel()
 	t.Style().SetSizePx(800, 400)
-	t.AddEHandlerFunc(func(e gwu.Event) {
-		// how to go from t.Selected() to something I can put
-		// in
-		Notify(fmt.Sprintf("Clicked on tab: %d", t.Selected()), e)
-		fmt.Printf("In tabPanel state change handler\n")
-		/*
-			component = t.CompAt(t.Selected())
-			if component.handlers[ETypeStateChange] != nil {
-				component.dispatchEvent(e.forkEvent(ETypeStateChange, c))
-			}
-		*/
-		t.CompAt(t.Selected())
-	}, gwu.ETypeStateChange)
-
+	/*
+		t.AddEHandlerFunc(func(e gwu.Event) {
+			// how to go from t.Selected() to something I can put
+			// in
+			Notify(fmt.Sprintf("Clicked on tab: %d", t.Selected()), e)
+			fmt.Printf("In tabPanel state change handler\n")
+			t.CompAt(t.Selected())
+		}, gwu.ETypeStateChange)
+	*/
 	t.SetTabBarPlacement(gwu.TbPlacementLeft)
 	t.TabBarFmt().SetHAlign(gwu.HALeft)
 	t.TabBarFmt().SetVAlign(gwu.VATop)
@@ -69,11 +64,6 @@ func buildTabPanel(j *jawaInfo) gwu.Comp {
 	tabc, objToFocus := buildEditRentals(j)
 	erl.AddEHandlerFunc(func(e gwu.Event) {
 		e.SetFocusedComp(objToFocus)
-		/*
-			if tabc.handlers[ETypeStateChange] != nil {
-				t.dispatchEvent(e.forkEvent(ETypeStateChange, tabc))
-			}
-		*/
 		fmt.Printf("in tabc lable click handler lunch point\n")
 		Notify("Executing tabc handler", e)
 	}, gwu.ETypeClick)

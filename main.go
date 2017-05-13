@@ -702,6 +702,14 @@ func main() {
 	if err == nil {
 		updateRentsOwed(dataPtr, ji)
 	}
+	if ji.Rental == nil {
+		// input file empty or non-existant, set up a basic default
+		ji.Rental = make(map[string]rentalRecord)
+		ji.Rental["undefined"] = rentalRecord{Apartment: "undefined"}
+		ji.Tenant = make(map[string]renterRecord)
+		ji.Tenant["undefined"] = renterRecord{Name: "undefined"}
+
+	}
 	if *editPtr == true {
 		editInfo(ji)
 		return

@@ -140,19 +140,6 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 	var apt string
 
 	c := gwu.NewPanel()
-	c.AddEHandlerFunc(func(e gwu.Event) {
-		list := getAptList(j)
-		apt = list[aptlb.SelectedIdx()]
-
-		updateRentalPage(j, apt, e,
-			AptName, TenName, TenKey, MRent, Deposit, DueDay,
-			Street, City, State, Zip, RentOwed, BounceOwed, LateOwed,
-			WaterOwed, DepositOwed, NextDueDate, RentChargedThrou)
-
-		e.MarkDirty(aptlb)
-		Notify("EditRentals Focus Event happened", e)
-		fmt.Printf("inside the editRentals state change handler\n")
-	}, /*gwu.ETypeStateChange*/ gwu.ETypeFocus /*gwu.ETypeClick*/)
 
 	tableA := gwu.NewTable()
 	tableA.SetCellPadding(2)
@@ -174,6 +161,25 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 		e.MarkDirty(aptlb)
 	}
 	aptlb.AddEHandlerFunc(aptlbHandler, gwu.ETypeChange)
+	aptlb.AddEHandlerFunc(func(e gwu.Event) {
+		list := getAptList(j)
+		indx := aptlb.SelectedIdx()
+		fmt.Printf("indx is: %d\n", indx)
+		if indx < 0 {
+			fmt.Printf("Indx is negative, so no Record to display or update\n")
+			return
+		}
+		apt = list[indx]
+
+		updateRentalPage(j, apt, e,
+			AptName, TenName, TenKey, MRent, Deposit, DueDay,
+			Street, City, State, Zip, RentOwed, BounceOwed, LateOwed,
+			WaterOwed, DepositOwed, NextDueDate, RentChargedThrou)
+
+		e.MarkDirty(aptlb)
+		Notify("EditRentals Focus Event happened", e)
+		fmt.Printf("inside the editRentals FOCUS handler\n")
+	}, gwu.ETypeFocus)
 
 	tableA.Add(aptlb, 0, 1)
 	tableA.Add(gwu.NewLabel("...."), 0, 3)
