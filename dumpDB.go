@@ -77,9 +77,19 @@ func updateDBPage(j *jawaInfo, e gwu.Event, p gwu.Panel) {
 	}
 }
 
-func buildDisplayDB(j *jawaInfo) gwu.Panel {
+func buildDisplayDB(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 	// display Common
 	c := gwu.NewPanel()
+	stb := gwu.NewTextBox("")
+	stb.Style().SetWidthPx(1).SetHeightPx(1)
+	stb.AddEHandlerFunc(func(e gwu.Event) {
+		// same as update button
+		updateDBPage(j, e, c)
+		e.MarkDirty(c)
+		Notify("Focus is on Dump DB Tab", e)
+	}, gwu.ETypeFocus)
+	c.Add(stb)
+
 	tableA := gwu.NewTable()
 	tableA.SetCellPadding(2)
 	tableA.EnsureSize(1, 3)
@@ -91,13 +101,13 @@ func buildDisplayDB(j *jawaInfo) gwu.Panel {
 		e.MarkDirty(np)
 		Notify("dumpDB Update complete", e)
 	}, gwu.ETypeChange)
-
 	tableA.Add(updb, 0, 1)
+
 	c.Add(tableA)
 	//np := gwu.NewPanal()
 	c.Add(np)
 
 	updateDBPage(j, nil, np)
 
-	return c
+	return c, stb
 }

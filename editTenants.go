@@ -82,25 +82,56 @@ func updateTenantPage(j *jawaInfo, ten string, e gwu.Event,
 	}
 }
 
-func buildEditTenants(j *jawaInfo) gwu.Panel {
+func buildEditTenants(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 	var aptname, tenname gwu.TextBox
 	var rentowed, bounceowed, lateowed gwu.TextBox
 	var waterowed, depositowed gwu.TextBox
 	var nextduedate, rentchargedthrou gwu.TextBox
 	var tenlb gwu.ListBox
 	var paymentRecords gwu.TextBox
+	var tablea gwu.Table
+	var tenlbhandler func(e gwu.Event)
+	var ten string // The master var for which tenant is active
 
 	c := gwu.NewPanel()
+	stb := gwu.NewTextBox("")
+	stb.Style().SetWidthPx(1).SetHeightPx(1)
+	stb.AddEHandlerFunc(func(e gwu.Event) {
 
-	tablea := gwu.NewTable()
+		//meList := getKeyList(j.Rental) //TODO: ***WANT TO MOVE TO THIS not getAptList()
+		meList := getTenantList(j)
+		tablea.Remove(tenlb)
+		tenlb, err := UpdateListBox(tenlb, &ten, meList, tenlbhandler)
+		if err != nil {
+			fmt.Printf("EditTenant update ListBox failed: %v\n", err)
+			return
+		}
+		tablea.Add(tenlb, 0, 1)
+
+		updateTenantPage(j, ten, e,
+			aptname, tenname, rentowed, bounceowed, lateowed,
+			waterowed, depositowed, nextduedate, rentchargedthrou, paymentRecords)
+
+		/*
+			list := getTenantList(j) //TODO should this use UpdateListBox()
+			tenlb := gwu.NewListBox(list)
+		*/
+
+		e.MarkDirty(tenlb)
+		e.MarkDirty(tablea)
+		Notify("Focus is on Edit Tenant Tab", e)
+	}, gwu.ETypeFocus)
+	c.Add(stb)
+
+	tablea = gwu.NewTable()
 	tablea.SetCellPadding(2)
 	tablea.EnsureSize(2, 5)
 	tablea.Add(gwu.NewLabel("Edit Tenant:"), 0, 0)
 	list := getTenantList(j)
-	ten := list[0]
+	ten = list[0]
 	tenlb = gwu.NewListBox(list)
 	tenlb.Style().SetFullWidth()
-	tenlbhandler := func(e gwu.Event) {
+	tenlbhandler = func(e gwu.Event) {
 		list := getTenantList(j)
 		ten = list[tenlb.SelectedIdx()]
 
@@ -270,5 +301,5 @@ func buildEditTenants(j *jawaInfo) gwu.Panel {
 	c.AddVSpace(15)
 	c.Add(cbdtable)
 
-	return c
+	return c, stb
 }

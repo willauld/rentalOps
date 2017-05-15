@@ -53,12 +53,19 @@ func updateCommonPage(j *jawaInfo, e gwu.Event,
 	}
 }
 
-func buildEditCommon(j *jawaInfo) gwu.Panel {
+func buildEditCommon(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 	var OfficeStreet, OfficeCity, OfficeState, OfficeZip gwu.TextBox
 	var OfficeManager, CTitle, LateFee, LateDays, BounceFee gwu.TextBox
 
 	c := gwu.NewPanel()
-	c.AddEHandlerFunc(func(e gwu.Event) {
+	stb := gwu.NewTextBox("")
+	stb.Style().SetWidthPx(1).SetHeightPx(1)
+	stb.AddEHandlerFunc(func(e gwu.Event) {
+		Notify("Focus is on Edit common info Tab", e)
+	}, gwu.ETypeFocus)
+	c.Add(stb)
+
+	c.AddEHandlerFunc(func(e gwu.Event) { // TODO remove if not doing anything
 
 		updateCommonPage(j, e,
 			OfficeStreet, OfficeCity, OfficeState, OfficeZip,
@@ -143,5 +150,5 @@ func buildEditCommon(j *jawaInfo) gwu.Panel {
 
 	c.Add(table)
 
-	return c
+	return c, stb
 }

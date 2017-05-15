@@ -15,7 +15,9 @@ func updateRentalRecord(j *jawaInfo, apt string,
 
 	var day, month, year int
 	var dayN, monthN, yearN int
-
+	if apt == "" || apt == "undefined" {
+		fmt.Printf("*** Bad Apartment Name **** Choose another **** ")
+	}
 	rec := j.Rental[apt]
 
 	n, err := fmt.Sscanf(NextDueDate.Text(), "%d-%d-%d\n", &month, &day, &year)
@@ -36,6 +38,7 @@ func updateRentalRecord(j *jawaInfo, apt string,
 		rec.Tenant = tname
 		rec.TenantKey = makeTenantKey(tname)
 	}
+	//TODO: do I need to check that j.Tenant exists
 	ten, ok := j.Tenant[rec.TenantKey]
 	if !ok {
 		fmt.Printf("Tenant appears to be NEW\n")
@@ -44,6 +47,12 @@ func updateRentalRecord(j *jawaInfo, apt string,
 		ten.NextPaymentDue = now.New(timeNowRental().AddDate(0, 1, 0)).BeginningOfMonth()
 		ten.Apartment = rec.Apartment
 		ten.Name = rec.Tenant
+		//j.Tenant[rec.TenantKey] = ten //insert now and later
+	}
+	// remove "undefined" as it is not needed as a place holder any longer
+	_, ok = j.Tenant["undefined"]
+	if ok {
+		delete(j.Tenant, "undefined")
 	}
 
 	fmt.Sscanf(MRent.Text(), "%f", &rec.Rent)
@@ -63,13 +72,17 @@ func updateRentalRecord(j *jawaInfo, apt string,
 	ten.NextPaymentDue = time.Date(year, time.Month(month), day, 0, 0, 0, 0, time.Local)
 	ten.RentChargedThru = time.Date(yearN, time.Month(monthN), dayN, 0, 0, 0, 0, time.Local)
 
-	if j.Tenant == nil {
-		j.Tenant = map[string]renterRecord{}
-	}
+	/*
+		if j.Tenant == nil {
+			j.Tenant = map[string]renterRecord{}
+		}
+	*/
 	j.Tenant[rec.TenantKey] = ten
-	if j.Rental == nil {
-		j.Rental = map[string]rentalRecord{}
-	}
+	/*
+		if j.Rental == nil {
+			j.Rental = map[string]rentalRecord{}
+		}
+	*/
 	j.Rental[apt] = rec
 }
 
@@ -126,7 +139,7 @@ func updateRentalPage(j *jawaInfo, apt string, e gwu.Event,
 	}
 }
 
-func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
+func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 	var AptName, TenName, TenKey, MRent, Deposit, DueDay gwu.TextBox
 	var Street, City, State, Zip, RentOwed, BounceOwed, LateOwed gwu.TextBox
 	var WaterOwed, DepositOwed gwu.TextBox
@@ -138,10 +151,34 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 	var bN gwu.Button
 	var aptlb gwu.ListBox
 	var apt string
+	var tableA gwu.Table
+	var aptlbHandler func(e gwu.Event)
 
 	c := gwu.NewPanel()
+	stb := gwu.NewTextBox("")
+	stb.Style().SetWidthPx(1).SetHeightPx(1)
+	stb.AddEHandlerFunc(func(e gwu.Event) {
+		updateRentalPage(j, apt, e,
+			AptName, TenName, TenKey, MRent, Deposit, DueDay,
+			Street, City, State, Zip, RentOwed, BounceOwed, LateOwed,
+			WaterOwed, DepositOwed, NextDueDate, RentChargedThrou)
 
-	tableA := gwu.NewTable()
+		meList := getAptList(j)
+		tableA.Remove(aptlb)
+		aptlb, err := UpdateListBox(aptlb, &apt, meList, aptlbHandler)
+		if err != nil {
+			fmt.Printf("EditRental update page failed: %v\n", err)
+			return
+		}
+		tableA.Add(aptlb, 0, 1)
+
+		e.MarkDirty(aptlb)
+		e.MarkDirty(tableA)
+		Notify("Focus on Edit Rental Tab", e)
+	}, gwu.ETypeFocus)
+	c.Add(stb)
+
+	tableA = gwu.NewTable()
 	tableA.SetCellPadding(2)
 	tableA.EnsureSize(2, 5)
 	tableA.Add(gwu.NewLabel("Edit Rental:"), 0, 0)
@@ -149,7 +186,7 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 	apt = list[0]
 	aptlb = gwu.NewListBox(list)
 	aptlb.Style().SetFullWidth()
-	aptlbHandler := func(e gwu.Event) {
+	aptlbHandler = func(e gwu.Event) {
 		list := getAptList(j)
 		apt = list[aptlb.SelectedIdx()]
 
@@ -161,27 +198,9 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 		e.MarkDirty(aptlb)
 	}
 	aptlb.AddEHandlerFunc(aptlbHandler, gwu.ETypeChange)
-	aptlb.AddEHandlerFunc(func(e gwu.Event) {
-		list := getAptList(j)
-		indx := aptlb.SelectedIdx()
-		fmt.Printf("indx is: %d\n", indx)
-		if indx < 0 {
-			fmt.Printf("Indx is negative, so no Record to display or update\n")
-			return
-		}
-		apt = list[indx]
-
-		updateRentalPage(j, apt, e,
-			AptName, TenName, TenKey, MRent, Deposit, DueDay,
-			Street, City, State, Zip, RentOwed, BounceOwed, LateOwed,
-			WaterOwed, DepositOwed, NextDueDate, RentChargedThrou)
-
-		e.MarkDirty(aptlb)
-		Notify("EditRentals Focus Event happened", e)
-		fmt.Printf("inside the editRentals FOCUS handler\n")
-	}, gwu.ETypeFocus)
 
 	tableA.Add(aptlb, 0, 1)
+
 	tableA.Add(gwu.NewLabel("...."), 0, 3)
 
 	crb = gwu.NewButton("Create Rental Record")
@@ -194,9 +213,8 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 		NewNameLabel.Style().SetBackground(gwu.ClrAqua)
 		bN.Style().SetBackground(gwu.ClrAqua)
 
-		// create rental record using "new" for the apartment name and require it be
-		//changed
-		//????
+		// create rental record using based on the
+		// apartment name entered before clicking "OK"
 		e.MarkDirty(NewNameLabel)
 		e.MarkDirty(NewName)
 		e.MarkDirty(bN)
@@ -229,10 +247,16 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 			return
 		}
 		fmt.Printf("name [%s] not in list --Thats a good thing\n", name)
-		if j.Rental == nil {
-			j.Rental = map[string]rentalRecord{}
-		}
+		/*
+			if j.Rental == nil {
+				j.Rental = map[string]rentalRecord{}
+			}
+		*/
 		j.Rental[name] = rentalRecord{Apartment: name}
+		_, ok = j.Rental["undefined"]
+		if ok {
+			delete(j.Rental, "undefined")
+		}
 
 		tableA.Remove(*labelToRemove)
 		tableA.Remove(NewName)
@@ -250,22 +274,23 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 		rec.TenantKey = ""
 		j.Rental[name] = rec
 
-		aptlb.ClearSelected()
+		//meList := getKeyList(j.Rental) //TODO: ***WANT TO MOVE TO THIS not getAptList()
+		meList := getAptList(j)
 		tableA.Remove(aptlb)
-		list := getAptList(j)
-		aptlb = gwu.NewListBox(list)
-		aptlb.Style().SetFullWidth()
-		nameIndex := strIndex(list, name)
-		aptlb.SetSelected(nameIndex, true)
-		aptlb.AddEHandlerFunc(aptlbHandler, gwu.ETypeChange)
+		aptlb, err := UpdateListBox(aptlb, &name, meList, aptlbHandler)
+		if err != nil {
+			fmt.Printf("EditRental update ListBox failed: %v\n", err)
+			return
+		}
 		tableA.Add(aptlb, 0, 1)
 
-		fmt.Printf("Added New name to list %+v\n", list)
+		fmt.Printf("Added New name to list %+v\n", meList)
 
 		updateRentalPage(j, name, e,
 			AptName, TenName, TenKey, MRent, Deposit, DueDay,
 			Street, City, State, Zip, RentOwed, BounceOwed, LateOwed,
 			WaterOwed, DepositOwed, NextDueDate, RentChargedThrou)
+		apt = name
 
 		e.MarkDirty(aptlb)
 		e.MarkDirty(tableA)
@@ -365,11 +390,12 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 			AptName, TenName, TenKey, MRent, Deposit, DueDay,
 			Street, City, State, Zip, RentOwed, BounceOwed, LateOwed,
 			WaterOwed, DepositOwed, NextDueDate, RentChargedThrou)
-
+		/* I'm thinking submit should not be changing aptlb
 		list := getAptList(j)
 		aptlb := gwu.NewListBox(list)
 
 		e.MarkDirty(aptlb)
+		*/
 
 	}, gwu.ETypeClick)
 
@@ -461,5 +487,5 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.ListBox) {
 	c.AddVSpace(15)
 	c.Add(cbdTable)
 
-	return c, aptlb
+	return c, stb
 }

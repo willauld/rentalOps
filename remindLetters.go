@@ -96,18 +96,33 @@ func updateRemindPage(j *jawaInfo, apt string, e gwu.Event,
 	}
 }
 
-func buildRemindPage(j *jawaInfo) gwu.Panel {
+func buildRemindPage(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 	var OStreetL, OCityStateZip, TenName, TStreet gwu.Label
 	var TCityStateZip, LDate, DearT, FirstP gwu.Label
 	var Details gwu.TextBox
 	var SecondP, Salutation, Correspondent gwu.Label
 	var aptlb gwu.ListBox
-	var apt string
+	var apt string // apt is KEY to defining the active apartment
+	var tableA gwu.Table
+	var aptlbHandler func(e gwu.Event)
 
 	c := gwu.NewPanel()
-	c.AddEHandlerFunc(func(e gwu.Event) {
-		list := getAptList(j)
-		apt = list[aptlb.SelectedIdx()]
+	stb := gwu.NewTextBox("")
+	stb.Style().SetWidthPx(1).SetHeightPx(1)
+	stb.AddEHandlerFunc(func(e gwu.Event) {
+		//meList := getKeyList(j.Rental) //TODO: ***WANT TO MOVE TO THIS not getAptList()
+		meList := getAptList(j)
+		tableA.Remove(aptlb)
+		aptlb, err := UpdateListBox(aptlb, &apt, meList, aptlbHandler)
+		if err != nil {
+			fmt.Printf("RemindLeter update ListBox failed: %v\n", err)
+			return
+		}
+		tableA.Add(aptlb, 0, 1)
+		/*
+			list := getAptList(j)
+			apt = list[aptlb.SelectedIdx()]
+		*/
 
 		updateRemindPage(j, apt, e,
 			OStreetL, OCityStateZip, TenName, TStreet,
@@ -115,11 +130,25 @@ func buildRemindPage(j *jawaInfo) gwu.Panel {
 			SecondP, Salutation, Correspondent)
 
 		e.MarkDirty(aptlb)
-		Notify("Remind Leter Focus Event happened", e)
-		fmt.Printf("inside the remind page state change handler\n")
-	}, gwu.ETypeStateChange /*gwu.ETypeFocus*/ /*gwu.ETypeClick*/)
+		Notify("TBD: Focus is on Reminder letter Tab", e)
+	}, gwu.ETypeFocus)
+	c.Add(stb)
+	/*
+		c.AddEHandlerFunc(func(e gwu.Event) {
+			list := getAptList(j)
+			apt = list[aptlb.SelectedIdx()]
 
-	tableA := gwu.NewTable()
+			updateRemindPage(j, apt, e,
+				OStreetL, OCityStateZip, TenName, TStreet,
+				TCityStateZip, LDate, DearT, FirstP, Details,
+				SecondP, Salutation, Correspondent)
+
+			e.MarkDirty(aptlb)
+			Notify("Remind Leter Focus Event happened", e)
+			fmt.Printf("inside the remind page state change handler\n")
+		}, gwu.ETypeStateChange )
+	*/
+	tableA = gwu.NewTable()
 	tableA.SetCellPadding(2)
 	tableA.EnsureSize(2, 5)
 	tableA.Add(gwu.NewLabel("Letter for Rental:"), 0, 0)
@@ -127,7 +156,7 @@ func buildRemindPage(j *jawaInfo) gwu.Panel {
 	apt = list[0]
 	aptlb = gwu.NewListBox(list)
 	aptlb.Style().SetFullWidth()
-	aptlbHandler := func(e gwu.Event) {
+	aptlbHandler = func(e gwu.Event) { //TODO remove if not doing anything
 		list := getAptList(j)
 		apt = list[aptlb.SelectedIdx()]
 
@@ -222,5 +251,5 @@ func buildRemindPage(j *jawaInfo) gwu.Panel {
 	c.Add(table)
 	c.AddVSpace(15)
 
-	return c
+	return c, stb
 }
