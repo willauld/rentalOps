@@ -165,7 +165,8 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 
 		meList := getAptList(j)
 		tableA.Remove(aptlb)
-		aptlb, err := UpdateListBox(aptlb, &apt, meList, aptlbHandler)
+		var err error
+		err = UpdateListBox(&aptlb, &apt, meList, aptlbHandler)
 		if err != nil {
 			fmt.Printf("EditRental update page failed: %v\n", err)
 			return
@@ -188,6 +189,8 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 	aptlb.Style().SetFullWidth()
 	aptlbHandler = func(e gwu.Event) {
 		list := getAptList(j)
+		fmt.Printf("HApt key list: %+v\n", list)
+		fmt.Printf("HApt current aptlb.SelectedIdx: %+v\n", aptlb.SelectedIdx())
 		apt = list[aptlb.SelectedIdx()]
 
 		updateRentalPage(j, apt, e,
@@ -277,7 +280,9 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 		//meList := getKeyList(j.Rental) //TODO: ***WANT TO MOVE TO THIS not getAptList()
 		meList := getAptList(j)
 		tableA.Remove(aptlb)
-		aptlb, err := UpdateListBox(aptlb, &name, meList, aptlbHandler)
+		err := UpdateListBox(&aptlb, &name, meList, aptlbHandler)
+		fmt.Printf("Apt key list: %+v\n", list)
+		fmt.Printf("Apt current aptlb.SelectedIdx: %+v\n", aptlb.SelectedIdx())
 		if err != nil {
 			fmt.Printf("EditRental update ListBox failed: %v\n", err)
 			return

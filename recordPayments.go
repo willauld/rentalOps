@@ -69,6 +69,9 @@ func getDayOfMonthDue(j *jawaInfo, apt string) string {
 func getRentalDeposit(j *jawaInfo, apt string) string {
 	return fmt.Sprintf("%-6.2f", j.Rental[apt].Deposit)
 }
+func getRentalTenant(j *jawaInfo, apt string) string {
+	return j.Rental[apt].Tenant
+}
 func getTenantKey(j *jawaInfo, apt string) string {
 	return j.Rental[apt].TenantKey
 }
@@ -188,7 +191,8 @@ func setTextFontIfPos(cur gwu.Label, color string, positive bool) {
 	cur.Style().SetBackground("")
 }
 func updateRecordPaymentPage(ji *jawaInfo, apt string, e gwu.Event,
-	cur1, cur2, cur3, cur4, monthly, rentalDeposit, payDue, nextDueDate gwu.Label,
+	cur1, cur2, cur3, cur4, monthly, rentalDeposit, payDue,
+	nextDueDate, Tenant gwu.Label,
 	cb, ays gwu.CheckBox, cbTable, tableb gwu.Table,
 	payDate, payRent, payLate, payBoun, payDepo, totalSub gwu.TextBox) {
 
@@ -218,6 +222,7 @@ func updateRecordPaymentPage(ji *jawaInfo, apt string, e gwu.Event,
 
 	monthly.SetText(getRentalRent(ji, apt))
 	rentalDeposit.SetText(getRentalDeposit(ji, apt))
+	Tenant.SetText(getRentalTenant(ji, apt))
 
 	payDue.SetText(getTenantRentDueDate(ji, getTenantKey(ji, apt)))
 	fmt.Printf("payDue: %+v\n", payDue.Text())
@@ -236,6 +241,7 @@ func updateRecordPaymentPage(ji *jawaInfo, apt string, e gwu.Event,
 		e.MarkDirty(cur4)
 		e.MarkDirty(monthly)
 		e.MarkDirty(rentalDeposit)
+		e.MarkDirty(Tenant)
 		e.MarkDirty(payDue)
 		e.MarkDirty(payDate)
 		e.MarkDirty(nextDueDate)
@@ -257,7 +263,7 @@ func buildRecordPayments(ji *jawaInfo) (gwu.Panel, gwu.TextBox) {
 	var table, tableA, tableb, cbTable gwu.Table
 	var cb, ays gwu.CheckBox
 	var aptlbHandler func(e gwu.Event)
-	var cur1, cur2, cur3, cur4, monthly, rentalDeposit, payDue gwu.Label
+	var cur1, cur2, cur3, cur4, monthly, rentalDeposit, payDue, rentalTenant gwu.Label
 	var payDate, nextDueDate, payRent, payLate, payBoun, payDepo, totalSub gwu.TextBox
 
 	c := gwu.NewPanel()
@@ -267,7 +273,7 @@ func buildRecordPayments(ji *jawaInfo) (gwu.Panel, gwu.TextBox) {
 		//meList := getKeyList(j.Rental) //TODO: ***WANT TO MOVE TO THIS not getAptList()
 		meList := getAptList(ji)
 		tableA.Remove(aptlb)
-		aptlb, err := UpdateListBox(aptlb, &apt, meList, aptlbHandler)
+		err := UpdateListBox(&aptlb, &apt, meList, aptlbHandler)
 		if err != nil {
 			fmt.Printf("EditTenant update ListBox failed: %v\n", err)
 			return
@@ -282,8 +288,9 @@ func buildRecordPayments(ji *jawaInfo) (gwu.Panel, gwu.TextBox) {
 			e.MarkDirty(totalSub)
 		}
 		updateRecordPaymentPage(ji, apt, e, cur1, cur2, cur3, cur4,
-			monthly, rentalDeposit, payDue, nextDueDate, cb, ays, cbTable, tableb,
-			payDate, payRent, payLate, payBoun, payDepo, totalSub)
+			monthly, rentalDeposit, payDue, nextDueDate, rentalTenant,
+			cb, ays, cbTable, tableb, payDate, payRent, payLate,
+			payBoun, payDepo, totalSub)
 		e.MarkDirty(aptlb)
 		e.MarkDirty(tableA)
 
@@ -293,13 +300,14 @@ func buildRecordPayments(ji *jawaInfo) (gwu.Panel, gwu.TextBox) {
 
 	tableA = gwu.NewTable()
 	tableA.SetCellPadding(2)
-	tableA.EnsureSize(1, 8)
+	tableA.EnsureSize(2, 8)
 	tableA.Add(gwu.NewLabel("Payment for apartment:"), 0, 0)
 	list := getAptList(ji)
 	apt = list[0]
 	aptlb = gwu.NewListBox(list)
 	aptlb.Style().SetFullWidth()
 	aptlbHandler = func(e gwu.Event) {
+		list := getAptList(ji)
 		indx := aptlb.SelectedIdx()
 		if indx < 0 {
 			indx = 0
@@ -307,8 +315,9 @@ func buildRecordPayments(ji *jawaInfo) (gwu.Panel, gwu.TextBox) {
 		apt = list[indx]
 
 		updateRecordPaymentPage(ji, apt, e, cur1, cur2, cur3, cur4,
-			monthly, rentalDeposit, payDue, nextDueDate, cb, ays, cbTable, tableb,
-			payDate, payRent, payLate, payBoun, payDepo, totalSub)
+			monthly, rentalDeposit, payDue, nextDueDate, rentalTenant,
+			cb, ays, cbTable, tableb, payDate, payRent, payLate,
+			payBoun, payDepo, totalSub)
 	}
 	aptlb.AddEHandlerFunc(aptlbHandler, gwu.ETypeChange)
 
@@ -321,6 +330,9 @@ func buildRecordPayments(ji *jawaInfo) (gwu.Panel, gwu.TextBox) {
 	tableA.Add(gwu.NewLabel("Deposit:"), 0, 6)
 	rentalDeposit = gwu.NewLabel(getRentalDeposit(ji, apt))
 	tableA.Add(rentalDeposit, 0, 7)
+	tableA.Add(gwu.NewLabel("Tenant:"), 1, 3)
+	rentalTenant = gwu.NewLabel(getRentalTenant(ji, apt))
+	tableA.Add(rentalTenant, 1, 4)
 	c.Add(tableA)
 
 	c.AddVSpace(15)
@@ -469,8 +481,9 @@ func buildRecordPayments(ji *jawaInfo) (gwu.Panel, gwu.TextBox) {
 			payDue.SetText(getTenantRentDueDate(ji, getTenantKey(ji, apt)))
 
 			updateRecordPaymentPage(ji, apt, e, cur1, cur2, cur3, cur4,
-				monthly, rentalDeposit, payDue, nextDueDate, cb, ays, cbTable, tableb,
-				payDate, payRent, payLate, payBoun, payDepo, totalSub)
+				monthly, rentalDeposit, payDue, nextDueDate, rentalTenant,
+				cb, ays, cbTable, tableb, payDate, payRent, payLate,
+				payBoun, payDepo, totalSub)
 		}
 
 		e.MarkDirty(payDate, payRent, payLate, payBoun, payDepo)
@@ -490,8 +503,9 @@ func buildRecordPayments(ji *jawaInfo) (gwu.Panel, gwu.TextBox) {
 			e.MarkDirty(totalSub)
 		}
 		updateRecordPaymentPage(ji, apt, e, cur1, cur2, cur3, cur4,
-			monthly, rentalDeposit, payDue, nextDueDate, cb, ays, cbTable, tableb,
-			payDate, payRent, payLate, payBoun, payDepo, totalSub)
+			monthly, rentalDeposit, payDue, nextDueDate, rentalTenant,
+			cb, ays, cbTable, tableb, payDate, payRent, payLate,
+			payBoun, payDepo, totalSub)
 	}, gwu.ETypeClick)
 	hp.Add(bt)
 	c.Add(hp)
@@ -512,7 +526,8 @@ func buildRecordPayments(ji *jawaInfo) (gwu.Panel, gwu.TextBox) {
 
 	c.Add(tableb)
 	updateRecordPaymentPage(ji, apt, nil, cur1, cur2, cur3, cur4,
-		monthly, rentalDeposit, payDue, nextDueDate, cb, ays, cbTable, tableb,
-		payDate, payRent, payLate, payBoun, payDepo, totalSub)
+		monthly, rentalDeposit, payDue, nextDueDate, rentalTenant,
+		cb, ays, cbTable, tableb, payDate, payRent, payLate,
+		payBoun, payDepo, totalSub)
 	return c, stb
 }

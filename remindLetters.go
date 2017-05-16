@@ -113,7 +113,9 @@ func buildRemindPage(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 		//meList := getKeyList(j.Rental) //TODO: ***WANT TO MOVE TO THIS not getAptList()
 		meList := getAptList(j)
 		tableA.Remove(aptlb)
-		aptlb, err := UpdateListBox(aptlb, &apt, meList, aptlbHandler)
+		err := UpdateListBox(&aptlb, &apt, meList, aptlbHandler)
+		fmt.Printf("RemindLeter UpdateListBox() setSelected: %v\n",
+			aptlb.SelectedIdx())
 		if err != nil {
 			fmt.Printf("RemindLeter update ListBox failed: %v\n", err)
 			return
@@ -129,7 +131,7 @@ func buildRemindPage(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 			TCityStateZip, LDate, DearT, FirstP, Details,
 			SecondP, Salutation, Correspondent)
 
-		e.MarkDirty(aptlb)
+		e.MarkDirty(aptlb, tableA)
 		Notify("TBD: Focus is on Reminder letter Tab", e)
 	}, gwu.ETypeFocus)
 	c.Add(stb)
@@ -156,8 +158,10 @@ func buildRemindPage(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 	apt = list[0]
 	aptlb = gwu.NewListBox(list)
 	aptlb.Style().SetFullWidth()
-	aptlbHandler = func(e gwu.Event) { //TODO remove if not doing anything
+	aptlbHandler = func(e gwu.Event) {
 		list := getAptList(j)
+		fmt.Printf("Apt key list: %+v\n", list)
+		fmt.Printf("Apt current aptlb.SelectedIdx: %+v\n", aptlb.SelectedIdx())
 		apt = list[aptlb.SelectedIdx()]
 
 		updateRemindPage(j, apt, e,
@@ -165,7 +169,8 @@ func buildRemindPage(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 			TCityStateZip, LDate, DearT, FirstP, Details,
 			SecondP, Salutation, Correspondent)
 
-		e.MarkDirty(aptlb)
+		Notify("Remind Leter change listbox item", e)
+		//e.MarkDirty(aptlb)
 	}
 	aptlb.AddEHandlerFunc(aptlbHandler, gwu.ETypeChange)
 

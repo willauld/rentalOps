@@ -101,7 +101,7 @@ func buildEditTenants(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 		//meList := getKeyList(j.Rental) //TODO: ***WANT TO MOVE TO THIS not getAptList()
 		meList := getTenantList(j)
 		tablea.Remove(tenlb)
-		tenlb, err := UpdateListBox(tenlb, &ten, meList, tenlbhandler)
+		err := UpdateListBox(&tenlb, &ten, meList, tenlbhandler)
 		if err != nil {
 			fmt.Printf("EditTenant update ListBox failed: %v\n", err)
 			return
@@ -111,11 +111,6 @@ func buildEditTenants(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 		updateTenantPage(j, ten, e,
 			aptname, tenname, rentowed, bounceowed, lateowed,
 			waterowed, depositowed, nextduedate, rentchargedthrou, paymentRecords)
-
-		/*
-			list := getTenantList(j) //TODO should this use UpdateListBox()
-			tenlb := gwu.NewListBox(list)
-		*/
 
 		e.MarkDirty(tenlb)
 		e.MarkDirty(tablea)

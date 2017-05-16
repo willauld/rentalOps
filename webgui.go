@@ -57,14 +57,15 @@ func getKeyList(o /*map[string]*/ interface{}) []string {
 }
 
 // UpdateListBox updates a gwu.ListBox item with a new list and handler
-func UpdateListBox(lb gwu.ListBox, name *string, l []string,
-	lbHandler func(gwu.Event)) (gwu.ListBox, error) {
+func UpdateListBox(lb *gwu.ListBox, name *string, l []string,
+	lbHandler func(gwu.Event)) error {
+
 	if len(l) < 1 {
-		return nil, fmt.Errorf("UpdateListBox() list is empty")
+		return fmt.Errorf("UpdateListBox() list is empty")
 	}
-	lb.ClearSelected()
-	lb = gwu.NewListBox(l)
-	lb.Style().SetFullWidth()
+	(*lb).ClearSelected()
+	(*lb) = gwu.NewListBox(l)
+	(*lb).Style().SetFullWidth()
 	nameIndex := strIndex(l, *name)
 	if nameIndex == -1 {
 		// try to do next best thing
@@ -72,9 +73,10 @@ func UpdateListBox(lb gwu.ListBox, name *string, l []string,
 		*name = l[0]
 		//return nil, fmt.Errorf("UpdateListBox() [%s] is not in %+v", name, l)
 	}
-	lb.SetSelected(nameIndex, true)
-	lb.AddEHandlerFunc(lbHandler, gwu.ETypeChange)
-	return lb, nil
+	(*lb).SetSelected(nameIndex, true)
+	(*lb).AddEHandlerFunc(lbHandler, gwu.ETypeChange)
+
+	return nil
 }
 
 func buildPanelTab(s string, t *gwu.TabPanel,

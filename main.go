@@ -389,7 +389,7 @@ func getUniqueKey(tr map[string]payment, date time.Time) (string, error) {
 	}
 	i := 1
 	for {
-		key := fmt.Sprintf("%d_%d_%d_%d", date.Month() /*.String()*/, date.Day(), date.Year(), i)
+		key := fmt.Sprintf("%d_%d_%d_%d", date.Year(), date.Month(), date.Day(), i)
 		_, ok := tr[key]
 		if !ok {
 			return key, nil
