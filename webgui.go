@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"sort"
 
 	"github.com/icza/gowut/gwu"
 	//"github.com/willauld/gowut/gwu"
@@ -19,6 +18,7 @@ func Notify(n string, e gwu.Event) {
 	}
 }
 
+/*
 var tabUpdateFuncs [20]func()
 
 func registerTabUpdateFunc(idx int, f func()) {
@@ -34,7 +34,7 @@ func updateTab(idx int) {
 	}
 }
 
-func getKeyList(o /*map[string]*/ interface{}) []string {
+func getKeyList(o interface{}) []string {
 	kvm, ok := o.(map[string]interface{})
 	if !ok {
 		fmt.Printf("HELP\n")
@@ -55,6 +55,7 @@ func getKeyList(o /*map[string]*/ interface{}) []string {
 	sort.Strings(keys)
 	return keys
 }
+*/
 
 // UpdateListBox updates a gwu.ListBox item with a new list and handler
 func UpdateListBox(lb *gwu.ListBox, name *string, l []string,

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 	"time"
@@ -23,6 +24,22 @@ func strIndex(vs []string, t string) int {
 	}
 	return -1
 }
+
+//TODO:GetKeys getAptList and GetTenantList should be moved to Main
+
+//GetKeys returns a []string containing the map keys (keys must be type string)
+func GetKeys(m interface{}) []string {
+	//TODO: NEED CHECKING THAT KEYS ARE STRINGS
+	temp := reflect.ValueOf(m).MapKeys()
+
+	keys := make([]string, len(temp))
+	for i, elem := range temp {
+		v := elem.String()
+		keys[i] = v
+	}
+	sort.Strings(keys)
+	return keys
+}
 func getAptList(ji *jawaInfo) []string {
 	if len(ji.Rental) < 1 {
 		fmt.Printf("There are no apartments yet defined\n")
@@ -30,15 +47,18 @@ func getAptList(ji *jawaInfo) []string {
 		keys[0] = "undefined"
 		return keys
 	}
-	keys := make([]string, len(ji.Rental))
+	/*
+		keys := make([]string, len(ji.Rental))
 
-	i := 0
-	for k := range ji.Rental {
-		keys[i] = k
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+		i := 0
+		for k := range ji.Rental {
+			keys[i] = k
+			i++
+		}
+		sort.Strings(keys)
+		return keys
+	*/
+	return GetKeys(ji.Rental)
 }
 func getTenantList(ji *jawaInfo) []string {
 	if len(ji.Rental) < 1 {
@@ -47,15 +67,18 @@ func getTenantList(ji *jawaInfo) []string {
 		keys[0] = "undefined"
 		return keys
 	}
-	keys := make([]string, len(ji.Tenant))
+	/*
+		keys := make([]string, len(ji.Tenant))
 
-	i := 0
-	for k := range ji.Tenant {
-		keys[i] = k
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+		i := 0
+		for k := range ji.Tenant {
+			keys[i] = k
+			i++
+		}
+		sort.Strings(keys)
+		return keys
+	*/
+	return GetKeys(ji.Tenant)
 }
 func makeTenantKey(nameStr string) string {
 	return strings.Replace(nameStr, " ", "", -1)

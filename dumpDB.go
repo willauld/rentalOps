@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
-import "github.com/icza/gowut/gwu"
+import (
+	"fmt"
+
+	"github.com/icza/gowut/gwu"
+)
 
 func updateDBPage(j *jawaInfo, e gwu.Event, p gwu.Panel) {
 
@@ -57,7 +60,11 @@ func updateDBPage(j *jawaInfo, e gwu.Event, p gwu.Panel) {
 		p.Add(gwu.NewLabel("        =================="))
 		p.Add(gwu.NewLabel("        Payment Records:"))
 		p.Add(gwu.NewLabel("        =================="))
-		for k, v2 := range v.Payment {
+		payments := GetKeys(v.Payment)
+		for i := 0; i < len(payments); i++ {
+			k := payments[i]
+			v2 := v.Payment[k]
+
 			p.Add(gwu.NewLabel("        =================="))
 			p.Add(gwu.NewLabel(fmt.Sprintf("        Payment: %s", k)))
 			p.Add(gwu.NewLabel("        =================="))
