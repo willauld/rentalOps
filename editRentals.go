@@ -35,6 +35,10 @@ func updateRentalRecord(j *jawaInfo, apt string,
 	rec.Apartment = apt
 	tname := TenName.Text()
 	if tname != rec.Tenant {
+		oldTen := j.Tenant[rec.TenantKey]
+		oldTen.Apartment = ""
+		j.Tenant[rec.TenantKey] = oldTen
+
 		rec.Tenant = tname
 		rec.TenantKey = makeTenantKey(tname)
 	}
@@ -47,7 +51,6 @@ func updateRentalRecord(j *jawaInfo, apt string,
 		ten.NextPaymentDue = now.New(timeNowRental().AddDate(0, 1, 0)).BeginningOfMonth()
 		ten.Apartment = rec.Apartment
 		ten.Name = rec.Tenant
-		//j.Tenant[rec.TenantKey] = ten //insert now and later
 	}
 	// remove "undefined" as it is not needed as a place holder any longer
 	_, ok = j.Tenant["undefined"]
@@ -206,6 +209,11 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 
 	tableA.Add(gwu.NewLabel("...."), 0, 3)
 
+	NewName = gwu.NewTextBox("new-apt-name")
+	NewNameLabel = gwu.NewLabel("Set Name for Apartment")
+	tryAgainLabel = gwu.NewLabel("That name already exists, please try again:")
+	labelToRemove := &NewNameLabel
+
 	crb = gwu.NewButton("Create Rental Record")
 	crb.AddEHandlerFunc(func(e gwu.Event) {
 		fmt.Printf("Do something\n")
@@ -227,21 +235,16 @@ func buildEditRentals(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 
 	tableA.Add(crb, 0, 4)
 
-	NewName = gwu.NewTextBox("new-apt-name")
-	NewNameLabel = gwu.NewLabel("Set Name for Apartment")
-	tryAgainLabel = gwu.NewLabel("That name already exists, please try again:")
-
 	bN = gwu.NewButton("OK")
 	bN.AddEHandlerFunc(func(e gwu.Event) {
 		var name string
 		fmt.Printf("Verify new name is present and is new then add record")
 		fmt.Printf("get new name \n")
-		labelToRemove := &NewNameLabel
 		name = NewName.Text()
 		_, ok := j.Rental[name]
 		if ok {
 			fmt.Printf("DUP, name[%s] in list\n", name)
-			tableA.Remove(NewNameLabel)
+			tableA.Remove(*labelToRemove)
 			labelToRemove = &tryAgainLabel
 			tryAgainLabel.Style().SetBackground(gwu.ClrAqua)
 			tableA.Add(tryAgainLabel, 1, 3)
