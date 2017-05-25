@@ -84,7 +84,7 @@ func updateDBPage(j *jawaInfo, e gwu.Event, p gwu.Panel) {
 	}
 }
 
-func buildDisplayDB(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
+func buildDumpDB(j *jawaInfo) (gwu.Panel, gwu.TextBox) {
 	// display Common
 	c := gwu.NewPanel()
 	stb := gwu.NewTextBox("")
