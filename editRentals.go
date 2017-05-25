@@ -51,11 +51,18 @@ func updateRentalRecord(j *jawaInfo, apt string,
 		ten.NextPaymentDue = now.New(timeNowRental().AddDate(0, 1, 0)).BeginningOfMonth()
 		ten.Apartment = rec.Apartment
 		ten.Name = rec.Tenant
+		DepositOwed.SetText(fmt.Sprintf("%-6.2f", rec.Deposit)) // only helpful with establish apartments
 	}
+	ten.Apartment = rec.Apartment
+
 	// remove "undefined" as it is not needed as a place holder any longer
 	_, ok = j.Tenant["undefined"]
 	if ok {
 		delete(j.Tenant, "undefined")
+	}
+	_, ok = j.Tenant[""]
+	if ok {
+		delete(j.Tenant, "")
 	}
 
 	fmt.Sscanf(MRent.Text(), "%f", &rec.Rent)
